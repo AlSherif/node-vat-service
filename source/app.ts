@@ -5,7 +5,7 @@ import {
 } from "./models/ConfigurationModel.js";
 import createApp from "./server.js";
 
-const configurationFile = "";
+const configurationFile = "config.json";
 
 const configuration: Configuration = readAppConfiguration(configurationFile);
 

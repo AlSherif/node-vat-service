@@ -1,0 +1,4 @@
+{
+    "apiUrlEU": "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number",
+    "apiUrlCH": "https://www.uid-wse.admin.ch/V5.0/PublicServices.svc?wsdl"
+}

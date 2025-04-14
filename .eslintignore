@@ -1,0 +1,28 @@
+build/
+# Ignoriere den Build-Ordner
+build/
+
+# Ignoriere Node.js-Module
+node_modules/
+
+# Ignoriere Umgebungsdateien
+.env
+
+# Ignoriere geloggte Dateien
+*.log
+
+# Ignoriere temporäre Dateien
+*.tmp
+*.temp
+
+# Ignoriere IDE-spezifische Dateien
+.vscode/
+.idea/
+
+# Ignoriere Test-Coverage-Berichte
+coverage/
+
+# Ignoriere generierte Dateien
+dist/
+
+.prettierrc.js

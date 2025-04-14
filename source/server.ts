@@ -1,7 +1,7 @@
-import express, { Express, Router, json } from "express";
+import express, { Express, Router, json, Request, Response, NextFunction } from "express";
 import responseTime from "response-time";
 import Helmet from "helmet";
-import DummyRouter from "./routers/DummyRouter.js"; // TO_CHANGE: naming
+import router from "./routers/Router.js"; // TO_CHANGE: naming
 import { Configuration } from "./models/ConfigurationModel.js";
 
 export default function createApp(configuration: Configuration): {
@@ -15,7 +15,15 @@ export default function createApp(configuration: Configuration): {
 
   app.use(responseTime({ suffix: true }));
 
-  const router = DummyRouter(configuration);
   app.use("/", router);
+  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error(err.stack);
+    res.status(500).json(
+      { 
+        code: 500,
+        message: 'Internal Server Error' 
+      }
+    );
+  });
   return { app, router };
 }

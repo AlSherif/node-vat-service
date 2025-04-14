@@ -1,0 +1,208 @@
+openapi: 3.0.3
+info:
+  title: VAT Validation Service
+  description: A service to validate VAT numbers using external web services.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+paths:
+  /:
+    post:
+      summary: Validate a VAT number
+      description: Validates a VAT number for a given country code using external web services.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VatValidationRequest'
+      responses:
+        '200':
+          description: VAT number is valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatValidationResponse'
+        '400':
+          description: Bad Request - Invalid VAT number or missing parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestError'
+              example:
+                code: 400
+                message: "VAT number is invalid for this country."
+        '501':
+          description: Not Implemented - Unsupported country code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotImplementedError'
+              example:
+                code: 501
+                message: "Country code not supported."
+        '500':
+          description: Internal Server Error - An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              example:
+                code: 500
+                message: "An error occurred while validating the VAT number via external Service."
+    get:
+      summary: Validate a VAT number via query parameters
+      description: Validates a VAT number for a given country code using query parameters.
+      parameters:
+        - name: countryCode
+          in: query
+          required: true
+          schema:
+            type: string
+            description: The country code in ISO 2 format.
+            example: "DE"
+        - name: vat
+          in: query
+          required: true
+          schema:
+            type: string
+            description: The VAT number to validate.
+            example: "123456789"
+      responses:
+        '200':
+          description: VAT number is valid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatValidationResponse'
+        '400':
+          description: Bad Request - Invalid VAT number or missing parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestError'
+              example:
+                code: 400
+                message: "VAT number is invalid for this country."
+        '501':
+          description: Not Implemented - Unsupported country code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotImplementedError'
+              example:
+                code: 501
+                message: "Country code not supported."
+        '500':
+          description: Internal Server Error - An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              example:
+                code: 500
+                message: "An error occurred while validating the VAT number via external Service."
+    put:
+      summary: Update VAT validation request
+      description: Updates a VAT validation request with new data.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VatValidationRequest'
+      responses:
+        '200':
+          description: VAT validation request updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatValidationResponse'
+        '400':
+          description: Bad Request - Invalid VAT number or missing parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestError'
+              example:
+                code: 400
+                message: "VAT number is invalid for this country."
+        '501':
+          description: Not Implemented - Unsupported country code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotImplementedError'
+              example:
+                code: 501
+                message: "Country code not supported."
+        '500':
+          description: Internal Server Error - An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              example:
+                code: 500
+                message: "An error occurred while validating the VAT number via external Service."
+components:
+  schemas:
+    VatValidationRequest:
+      type: object
+      properties:
+        countryCode:
+          type: string
+          description: The country code in ISO 2 format.
+          example: "DE"
+        vat:
+          type: string
+          description: The VAT number to validate.
+          example: "123456789"
+      required:
+        - countryCode
+        - vat
+    VatValidationResponse:
+      type: object
+      properties:
+        validated:
+          type: boolean
+          description: Indicates if the VAT number is valid.
+          example: true
+        details:
+          type: string
+          description: Additional details about the validation.
+          example: "VAT number is valid for the given country code."
+    BadRequestError:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 400
+        message:
+          type: string
+          description: Error message.
+          example: "VAT number is invalid for this country."
+    NotImplementedError:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 501
+        message:
+          type: string
+          description: Error message.
+          example: "Country code not supported."
+    InternalServerError:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 500
+        message:
+          type: string
+          description: Error message.
+          example: "An error occurred while validating the VAT number via external Service."
