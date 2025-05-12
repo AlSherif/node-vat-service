@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { Express } from 'express';
 import createApp from '../source/server.js';
-import { Configuration } from '../source/models/ConfigurationModel.js';
+import { Configuration } from '../source/models/Configuration.js';
 
 describe('App Initialization', () => {
   let app: Express;

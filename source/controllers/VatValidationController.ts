@@ -1,64 +1,98 @@
 import { Request, Response } from 'express';
-import { vatRequestSchema } from '../schema/vatSchema';
-import { Configuration, readAppConfiguration } from '../models/ConfigurationModel';
+import { Configuration, readAppConfiguration } from '../models/Configuration';
 import { EUVatValidationService } from '../services/EUVatValidationService'
 import { CHVatValidationService } from '../services/CHVatValidationService';
+import { ExternalVatValidationService } from '../services/VatValidationService';
+import { z } from 'zod';
+import { SupportedCountry } from '../models/SupportedCountry';
 
 const configurationFile = "config.json";
 const configuration: Configuration = readAppConfiguration(configurationFile);
-const EUVatService = new EUVatValidationService(configuration.apiUrlEU);
-const CHVatService = new CHVatValidationService(configuration.apiUrlCH);
+const externalVatServices : Array<ExternalVatValidationService> = new Array()
+externalVatServices.push( new EUVatValidationService(configuration.apiUrl['EUVatValidationService']));
+externalVatServices.push( new CHVatValidationService(configuration.apiUrl['CHVatValidationService']));
 
 export const validateVatController = async (req: Request, res: Response) => {
-  const countryCode = (req.query?.countryCode ?? req.body.countryCode) as string;
-  const vat = (req.query?.vat ?? req.body.vat) as string;
+  // const countryCode = (req.query?.countryCode ?? req.body.countryCode) as string;
+  // const vat = (req.query?.vat ?? req.body.vat) as string;
 
-  // Validierung der Eingabe mit Zod
-  const parsed = vatRequestSchema.safeParse({ countryCode, vat });
+  const vatRequest = req.query?req.query: req.body;
+  // Define the Zod schema
+  const isoMessage = "countryCode must be a string in ISO 2 format and consist of two uppercase letters";
+  const vatMessage = "vat must be a string and not be empty or null";
+  const simpleRequestValidationSchema = z.object({
+    countryCode: z
+      .string()
+      .length(2, isoMessage) // Ensure ISO 2 format
+      .regex(/^[A-Z]{2}$/, isoMessage), // Validate uppercase letters
+    vat: z
+      .string()
+      .min(1, vatMessage) // Ensure VAT is not empty
+  });
 
-  if (!parsed.success) {
-    // Fehler aus der Validierung extrahieren
-    const errors = parsed.error.flatten();
-
-    if ((errors.fieldErrors.countryCode ?? []).length > 0) {
-      return res.status(501).json({
-        code: 501,
-        // message: 'Country code not supported.',
-        message: errors.fieldErrors.countryCode?.join(', '),
-      });
-    } else if ((errors.fieldErrors.vat ?? []).length > 0) {
+  // Basic Request Validation
+  try {
+    const data = simpleRequestValidationSchema.parse(vatRequest);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      // Use map() to extract the "message" field and join() to concatenate with ";"
+      const allErrorMessages = error.issues
+        .map((issue) => issue.message) // Extract the "message" field
+        .join('; '); // Concatenate with "; "
+      // Return the error response
       return res.status(400).json({
         code: 400,
-        // message: 'VAT number is invalid for this country.',
-        message: errors.fieldErrors.vat?.join(', '),
-      });
-    } else if (errors.formErrors.length > 0) {
-      return res.status(400).json({
-        code: 400,
-        // message: 'Invalid input',
-        message: errors.formErrors?.join(', ')
+        message: allErrorMessages,
       });
     }
   }
 
-  let isValid = true;
-  try {
-    if(countryCode === 'CH') {
-      isValid = await CHVatService.validate(countryCode, vat);  
+  //Check if countryCode is supported
+  const countryCode = vatRequest.countryCode as string;
+  const vat = vatRequest.vat as string;
+
+  let supportedCountry: SupportedCountry | null  = null;
+  let externalService: ExternalVatValidationService | null = null;
+  for (const service of externalVatServices) {
+    let temp = service.getSupportedCountry(countryCode);
+    if (temp) {
+      supportedCountry = temp;
+      externalService = service;
+      break;
     }
-    else {
-      isValid = await EUVatService.validate(countryCode, vat);
-    }
-  } catch (error) {
-    console.error('Error validating VAT number:', error);
-    return res.status(500).json({
-      code: 500,
-      message: 'An error occurred while validating the VAT number via external Service.'
+  }
+
+  if (!supportedCountry) {
+    const message = `The country code ${countryCode} is not supported by any VAT validation service.`;
+    return res.status(501).json({
+      code: 501,
+      message: message,
     });
   }
 
+  // Match the VAT number with the regex
+  if(!supportedCountry.regex.test(vat)){
+    const message = `The VAT number ${vat} does not match the expected format for country code ${countryCode}.`;
+    return res.status(400).json({
+      code: 400,
+      message: message,
+    }); 
+  }
+
+  // Validate the VAT number using the external service
+  try {
+  const isValid = await externalService?.validate(countryCode, vat);
   return res.status(200).json({
     validated: isValid,
     details: isValid?'VAT number is valid for the given country code.':'VAT number marked as invalid by the external service.',
   });
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Error during external VAT validation:', error.message);
+      return res.status(500).json({
+        code: 500,
+        message: error.message,
+      });
+    }
+  }
 };

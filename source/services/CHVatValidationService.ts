@@ -1,10 +1,21 @@
 import { createClientAsync } from 'soap';
-import { VatValidationService } from './VatValidationService';
+import { ExternalVatValidationService } from './VatValidationService';
+import { SupportedCountry } from '../models/SupportedCountry';
 
-export class CHVatValidationService implements VatValidationService {
+const supportedCountries = new Array<SupportedCountry>(
+  { countryCode: "CH", regex: new RegExp("^CHE-[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}$") }
+);
+
+export class CHVatValidationService extends ExternalVatValidationService {
+
+  getSupportedCountries(): Array<SupportedCountry> {
+    return supportedCountries;
+  }
+
   private readonly wsdlUrl: string;
 
   constructor(wsdlUrl: string) {
+    super();
     this.wsdlUrl = wsdlUrl;
   }
 

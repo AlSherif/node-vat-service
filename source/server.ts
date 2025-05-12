@@ -1,8 +1,8 @@
 import express, { Express, Router, json, Request, Response, NextFunction } from "express";
 import responseTime from "response-time";
 import Helmet from "helmet";
-import router from "./routers/Router.js"; // TO_CHANGE: naming
-import { Configuration } from "./models/ConfigurationModel.js";
+import router from "./routers/Router.js";
+import { Configuration } from "./models/Configuration.js";
 
 export default function createApp(configuration: Configuration): {
   app: Express;

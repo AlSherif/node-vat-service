@@ -2,7 +2,7 @@ import { Server } from "http";
 import {
   Configuration,
   readAppConfiguration,
-} from "./models/ConfigurationModel.js";
+} from "./models/Configuration.js";
 import createApp from "./server.js";
 
 const configurationFile = "config.json";

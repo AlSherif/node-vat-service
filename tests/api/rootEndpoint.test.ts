@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { Express } from 'express';
 import createApp from '../../source/server.js'; // Importiere die App-Erstellungsfunktion
-import { Configuration } from '../../source/models/ConfigurationModel.js';
+import { Configuration } from '../../source/models/Configuration.js';
 import http from 'http';
 
 describe('POST /', () => {
