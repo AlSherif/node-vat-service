@@ -42,6 +42,9 @@ importers:
       '@types/response-time':
         specifier: 2.3.8
         version: 2.3.8
+      '@types/sax':
+        specifier: ^1.2.7
+        version: 1.2.7
       '@types/supertest':
         specifier: 6.0.2
         version: 6.0.2
@@ -450,6 +453,9 @@ packages:
 
   '@types/response-time@2.3.8':
     resolution: {integrity: sha512-7qGaNYvdxc0zRab8oHpYx7AW17qj+G0xuag1eCrw3M2VWPJQ/HyKaaghWygiaOUl0y9x7QGQwppDpqLJ5V9pzw==}
+
+  '@types/sax@1.2.7':
+    resolution: {integrity: sha512-rO73L89PJxeYM3s3pPPjiPgVVcymqU490g0YO5n5By0k2Erzj6tay/4lr1CHAAU4JyOWd1rpQ8bCf6cZfHU96A==}
 
   '@types/semver@7.7.0':
     resolution: {integrity: sha512-k107IF4+Xr7UHjwDc7Cfd6PRQfbdkiRabXGRjo07b4WyPahFBZCZ1sE+BNxYIJPPg73UkfOsVOLwqVc/6ETrIA==}
@@ -2839,6 +2845,10 @@ snapshots:
   '@types/response-time@2.3.8':
     dependencies:
       '@types/express': 4.17.21
+      '@types/node': 22.10.5
+
+  '@types/sax@1.2.7':
+    dependencies:
       '@types/node': 22.10.5
 
   '@types/semver@7.7.0': {}

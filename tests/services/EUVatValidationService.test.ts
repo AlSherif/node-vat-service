@@ -1,9 +1,20 @@
 import { EUVatValidationService } from '../../source/services/EUVatValidationService';
 import axios from 'axios';
+import http from 'http';
+import https from 'https';
+
+beforeAll(() => {
+  const httpAgent = new http.Agent({ keepAlive: true });
+  const httpsAgent = new https.Agent({ keepAlive: true });
+  // Set default agents
+  axios.defaults.httpAgent = httpAgent;
+  axios.defaults.httpsAgent = httpsAgent;
+});
+
 
 afterAll(() => {
-  // Schließe alle offenen Verbindungen
-  axios.defaults.adapter = undefined;
+  axios.defaults.httpAgent.destroy();
+  axios.defaults.httpsAgent.destroy();
 });
 
 describe('EUVatValidationService', () => {

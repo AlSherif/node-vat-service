@@ -2,6 +2,10 @@ import { validateVatController } from '../../source/controllers/VatValidationCon
 import { Request, Response } from 'express';
 import { CHVatValidationService } from '../../source/services/CHVatValidationService';
 import { EUVatValidationService } from '../../source/services/EUVatValidationService';
+import axios from 'axios';
+import http from 'http';
+import https from 'https';
+
 
 // Mock the services
 jest.mock('../../source/services/CHVatValidationService');
@@ -28,6 +32,20 @@ describe('validateVatController', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
+
+beforeAll(() => {
+  const httpAgent = new http.Agent({ keepAlive: true });
+  const httpsAgent = new https.Agent({ keepAlive: true });
+  // Set default agents
+  axios.defaults.httpAgent = httpAgent;
+  axios.defaults.httpsAgent = httpsAgent;
+});
+
+
+afterAll(() => {
+  axios.defaults.httpAgent.destroy();
+  axios.defaults.httpsAgent.destroy();
+});
 
   it('should return 200 for a valid Swiss VAT number (CH)', async () => {
     // Mock CHVatValidationService to return true

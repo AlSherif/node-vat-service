@@ -2,9 +2,11 @@ import request from 'supertest';
 import { Express } from 'express';
 import createApp from '../../source/server.js'; // Importiere die App-Erstellungsfunktion
 import { Configuration } from '../../source/models/ConfigurationModel.js';
+import http from 'http';
 
 describe('POST /', () => {
   let app: Express;
+  let server: http.Server; // Store the server instance
 
   beforeAll(() => {
     // Mock-Konfiguration für Tests
@@ -24,10 +26,22 @@ describe('POST /', () => {
 
     // App erstellen
     app = createApp(mockConfiguration).app;
+
+    server = app.listen(
+      3000,
+      () => {
+        console.log({ description: "START" });
+      }
+    );
+  });
+
+  afterAll(async () => {
+    // Close the server to release resources
+    await server.close();
   });
 
   it('should return 200 for a valid VAT EU number and country code', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/')
       .send({
         countryCode: 'DE',
@@ -38,7 +52,7 @@ describe('POST /', () => {
   });
 
   it('should return 200 for a valid VAT CH number and country code', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/')
       .send({
         countryCode: 'CH',
@@ -46,10 +60,10 @@ describe('POST /', () => {
       });
 
     expect(response.status).toBe(200);
-  });
+  }, 12000);
 
   it('should return 400 for an invalid VAT number', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/')
       .send({
         countryCode: 'DE',
@@ -60,7 +74,7 @@ describe('POST /', () => {
   });
 
   it('should return 501 for an unsupported country code', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/')
       .send({
         countryCode: 'XX', // Nicht unterstützter Ländercode
@@ -71,7 +85,7 @@ describe('POST /', () => {
   });
 
   it('should return 400 for missing parameters', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/')
       .send({});
 
@@ -80,7 +94,7 @@ describe('POST /', () => {
   });
 
   it('should return 400 for a valid country code but invalid VAT format', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/')
       .send({
         countryCode: 'FR',
@@ -91,7 +105,7 @@ describe('POST /', () => {
   });
 
   it('should return 200 for a valid VAT number with complex regex', async () => {
-    const response = await request(app)
+    const response = await request(server)
       .post('/')
       .send({
         countryCode: 'FR',
