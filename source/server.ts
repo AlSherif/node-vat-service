@@ -1,29 +1,26 @@
-import express, { Express, Router, json, Request, Response, NextFunction } from "express";
-import responseTime from "response-time";
-import Helmet from "helmet";
-import router from "./routers/Router.js";
-import { Configuration } from "./models/Configuration.js";
+import { Configuration, readConfiguration } from "./models/Configuration.js";
+import createApp from "./app.js";
+import { createServer as createHttpServer, Server } from "http";
 
-export default function createApp(configuration: Configuration): {
-  app: Express;
-  router: Router;
-} {
-  const app: Express = express();
+// read the configuration file
+const configurationFile = "config.json";
+const configuration: Configuration = readConfiguration(configurationFile);
 
-  app.use(Helmet());
-  app.use(json());
+// Create an Express application
+  const app = createApp(configuration);
 
-  app.use(responseTime({ suffix: true }));
+  // Create the HTTP server
+const server = createHttpServer(app);
 
-  app.use("/", router);
-  app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error(err.stack);
-    res.status(500).json(
-      { 
-        code: 500,
-        message: 'Internal Server Error' 
-      }
-    );
-  });
-  return { app, router };
-}
+// Server-specific configurations
+server.keepAliveTimeout = configuration.expressServerOptions.keepAliveTimeout;
+server.maxHeadersCount = configuration.expressServerOptions.maxHeadersCount;
+server.maxConnections = configuration.expressServerOptions.maxConnections;
+server.headersTimeout = configuration.expressServerOptions.headersTimeout;
+server.requestTimeout = configuration.expressServerOptions.requestTimeout;
+server.timeout = configuration.expressServerOptions.timeout;
+
+server.listen(configuration.port, () => {
+  console.log({ description: "START", port: configuration.port });
+});
+export { app, server };

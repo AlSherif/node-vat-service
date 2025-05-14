@@ -1,9 +1,16 @@
 import { Router } from "express";
-import { validateVatController } from "../controllers/VatValidationController.js";
+import { createVatValidationController } from "../controllers/VatValidationController.js";
+import { Configuration } from "../models/Configuration.js";
 
-const expressRouter: Router = Router({
+const createExpressRouter = (configuration: Configuration) => {
+  const expressRouter = Router({
     caseSensitive: true,
     strict: true,
   });
-  expressRouter.all('/', validateVatController)
-export default expressRouter;
+    const validateVatController = createVatValidationController(configuration);
+  expressRouter.post('/', validateVatController);
+  expressRouter.get('/',validateVatController);
+  return expressRouter
+}  
+
+export default createExpressRouter;

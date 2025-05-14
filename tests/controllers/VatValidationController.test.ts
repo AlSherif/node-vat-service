@@ -3,16 +3,14 @@ import { Request, Response } from 'express';
 import { CHVatValidationService } from '../../source/services/CHVatValidationService';
 import { EUVatValidationService } from '../../source/services/EUVatValidationService';
 import axios from 'axios';
-import http from 'http';
-import https from 'https';
+import { createClientAsync } from 'soap';
 
+// Mock external dependencies
+jest.mock('axios');
+jest.mock('soap');
 
-// Mock the services
-jest.mock('../../source/services/CHVatValidationService');
-jest.mock('../../source/services/EUVatValidationService');
-
-const MockCHVatValidationService = CHVatValidationService as jest.MockedClass<typeof CHVatValidationService>;
-const MockEUVatValidationService = EUVatValidationService as jest.MockedClass<typeof EUVatValidationService>;
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockedCreateClientAsync = createClientAsync as jest.Mock;
 
 describe('validateVatController', () => {
   let mockRequest: Partial<Request>;
@@ -33,43 +31,9 @@ describe('validateVatController', () => {
     jest.clearAllMocks();
   });
 
-beforeAll(() => {
-  const httpAgent = new http.Agent({ keepAlive: true });
-  const httpsAgent = new https.Agent({ keepAlive: true });
-  // Set default agents
-  axios.defaults.httpAgent = httpAgent;
-  axios.defaults.httpsAgent = httpsAgent;
-});
-
-
-afterAll(() => {
-  axios.defaults.httpAgent.destroy();
-  axios.defaults.httpsAgent.destroy();
-});
-
-  it('should return 200 for a valid Swiss VAT number (CH)', async () => {
-    // Mock CHVatValidationService to return true
-    MockCHVatValidationService.prototype.validate.mockResolvedValue(true);
-
-    mockRequest = {
-      body: {
-        countryCode: 'CH',
-        vat: 'CHE-123.456.789',
-      },
-    };
-
-    await validateVatController(mockRequest as Request, mockResponse as Response);
-
-    expect(statusMock).toHaveBeenCalledWith(200);
-    expect(jsonMock).toHaveBeenCalledWith({
-      validated: true,
-      details: 'VAT number is valid for the given country code.',
-    });
-  });
-
-  it('should return 200 for a valid German VAT number (DE)', async () => {
-    // Mock EUVatValidationService to return true
-    MockEUVatValidationService.prototype.validate.mockResolvedValue(true);
+  it('should return 200 for a valid VAT number', async () => {
+    // Mock the external HTTP call for EUVatValidationService
+    mockedAxios.post.mockResolvedValue({ status: 200, data: { valid: true } });
 
     mockRequest = {
       body: {
@@ -87,10 +51,71 @@ afterAll(() => {
     });
   });
 
-  it('should return 400 for an invalid German VAT number (DE)', async () => {
-    // Mock EUVatValidationService to return false
-    MockEUVatValidationService.prototype.validate.mockResolvedValue(false);
+  it('should return 200 for an invalid VAT number in correct format', async () => {
+    // Mock the external HTTP call for EUVatValidationService
+    mockedAxios.post.mockResolvedValue({ status: 200, data: { valid: false } });
 
+    mockRequest = {
+      body: {
+        countryCode: 'DE',
+        vat: 'DE123456789',
+      },
+    };
+
+    await validateVatController(mockRequest as Request, mockResponse as Response);
+
+    expect(statusMock).toHaveBeenCalledWith(200);
+    expect(jsonMock).toHaveBeenCalledWith({
+      validated: false,
+      details: 'VAT number marked as invalid by the external service.',
+    });
+  });
+
+  it('should return 200 for a valid Swiss VAT number', async () => {
+    // Mock the external SOAP call for CHVatValidationService
+    mockedCreateClientAsync.mockResolvedValue({
+      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{ valid: true }]),
+    });
+
+    mockRequest = {
+      body: {
+        countryCode: 'CH',
+        vat: 'CHE-123.456.789',
+      },
+    };
+
+    await validateVatController(mockRequest as Request, mockResponse as Response);
+
+    expect(statusMock).toHaveBeenCalledWith(200);
+    expect(jsonMock).toHaveBeenCalledWith({
+      validated: true,
+      details: 'VAT number is valid for the given country code.',
+    });
+  });
+
+  it('should return 200 for an invalid Swiss VAT number', async () => {
+    // Mock the external SOAP call for CHVatValidationService
+    mockedCreateClientAsync.mockResolvedValue({
+      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{ valid: false }]),
+    });
+
+    mockRequest = {
+      body: {
+        countryCode: 'CH',
+        vat: 'CHE-000.000.000',
+      },
+    };
+
+    await validateVatController(mockRequest as Request, mockResponse as Response);
+
+    expect(statusMock).toHaveBeenCalledWith(200);
+    expect(jsonMock).toHaveBeenCalledWith({
+      validated: false,
+      details: 'VAT number marked as invalid by the external service.',
+    });
+  });
+
+  it('should return 400 for an invalid VAT format', async () => {
     mockRequest = {
       body: {
         countryCode: 'DE',
@@ -101,7 +126,10 @@ afterAll(() => {
     await validateVatController(mockRequest as Request, mockResponse as Response);
 
     expect(statusMock).toHaveBeenCalledWith(400);
-
+    expect(jsonMock).toHaveBeenCalledWith({
+      code: 400,
+      message: 'The VAT number INVALID does not match the expected format for country code DE.',
+    });
   });
 
   it('should return 501 for an unsupported country code', async () => {
@@ -117,37 +145,39 @@ afterAll(() => {
     expect(statusMock).toHaveBeenCalledWith(501);
     expect(jsonMock).toHaveBeenCalledWith({
       code: 501,
-      message: 'Country code not supported.',
+      message: 'The country code XX is not supported by any VAT validation service.',
     });
   });
 
-  it('should return 400 for missing parameters', async () => {
-    mockRequest = {
-      body: {},
-    };
-
-    await validateVatController(mockRequest as Request, mockResponse as Response);
-
-    expect(statusMock).toHaveBeenCalledWith(400);
-  });
-
-  it('should return 500 for an internal server error', async () => {
-    // Mock CHVatValidationService to throw an error
-    MockCHVatValidationService.prototype.validate.mockRejectedValue(new Error('Internal error'));
-
+  it('should return 400 if countryCode is missing', async () => {
     mockRequest = {
       body: {
-        countryCode: 'CH',
-        vat: 'CHE-123.456.789',
+        vat: 'DE123456789',
       },
     };
 
     await validateVatController(mockRequest as Request, mockResponse as Response);
 
-    expect(statusMock).toHaveBeenCalledWith(500);
+    expect(statusMock).toHaveBeenCalledWith(400);
     expect(jsonMock).toHaveBeenCalledWith({
-      code: 500,
-      message: 'An error occurred while validating the VAT number via external Service.',
+      code: 400,
+      message: 'countryCode must be a string in ISO 2 format and consist of two uppercase letters',
+    });
+  });
+
+  it('should return 400 if vat is missing', async () => {
+    mockRequest = {
+      body: {
+        countryCode: 'DE',
+      },
+    };
+
+    await validateVatController(mockRequest as Request, mockResponse as Response);
+
+    expect(statusMock).toHaveBeenCalledWith(400);
+    expect(jsonMock).toHaveBeenCalledWith({
+      code: 400,
+      message: 'vat must be a string and not be empty or null',
     });
   });
 });

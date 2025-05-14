@@ -1,24 +1,39 @@
-import { Server } from "http";
-import {
-  Configuration,
-  readAppConfiguration,
-} from "./models/Configuration.js";
-import createApp from "./server.js";
+import express, { Express, json, Request, Response, NextFunction } from "express";
+import responseTime from "response-time";
+import Helmet from "helmet";
+import createExpressRouter from "./routers/Router.js";
+import { Configuration } from "./models/Configuration.js";
 
-const configurationFile = "config.json";
+const createApp = (configuration: Configuration) => {
+  // Create an Express application
+  const app: Express = express();
 
-const configuration: Configuration = readAppConfiguration(configurationFile);
+  // Middleware
+  app.use(Helmet());
+  app.use(json());
+  app.use(responseTime({ suffix: true }));
 
-const server: Server = createApp(configuration).app.listen(
-  configuration.port,
-  () => {
-    console.log({ description: "START" });
-  }
-);
+  // Router
+  app.use("/", createExpressRouter(configuration));
 
-server.keepAliveTimeout = configuration.expressServerOptions.keepAliveTimeout;
-server.maxHeadersCount = configuration.expressServerOptions.maxHeadersCount;
-server.maxConnections = configuration.expressServerOptions.maxConnections;
-server.headersTimeout = configuration.expressServerOptions.headersTimeout;
-server.requestTimeout = configuration.expressServerOptions.requestTimeout;
-server.timeout = configuration.expressServerOptions.timeout;
+  // Handle unknown routes
+  app.use((req: Request, res: Response) => {
+    res.status(404).json({
+      code: 404,
+      message: "Not Found",
+    });
+  });
+
+  // Error-handling middleware
+  app.use((err: Error, req: Request, res: Response) => {
+    console.error(err.stack);
+    res.status(500).json({
+      code: 500,
+      message: "Internal Server Error",
+    });
+  });
+  ;
+  return app;
+}
+
+export default createApp;

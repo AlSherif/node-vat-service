@@ -1,20 +1,17 @@
 import { Request, Response } from 'express';
-import { Configuration, readAppConfiguration } from '../models/Configuration';
+import { Configuration, readConfiguration } from '../models/Configuration';
 import { EUVatValidationService } from '../services/EUVatValidationService'
 import { CHVatValidationService } from '../services/CHVatValidationService';
 import { ExternalVatValidationService } from '../services/VatValidationService';
 import { z } from 'zod';
 import { SupportedCountry } from '../models/SupportedCountry';
 
-const configurationFile = "config.json";
-const configuration: Configuration = readAppConfiguration(configurationFile);
-const externalVatServices : Array<ExternalVatValidationService> = new Array()
-externalVatServices.push( new EUVatValidationService(configuration.apiUrl['EUVatValidationService']));
-externalVatServices.push( new CHVatValidationService(configuration.apiUrl['CHVatValidationService']));
+export const createVatValidationController = (configuration: Configuration) => {
+  const externalVatServices : Array<ExternalVatValidationService> = new Array()
+  externalVatServices.push( new EUVatValidationService(configuration.apiUrl['EUVatValidationService']));
+  externalVatServices.push( new CHVatValidationService(configuration.apiUrl['CHVatValidationService']));
 
-export const validateVatController = async (req: Request, res: Response) => {
-  // const countryCode = (req.query?.countryCode ?? req.body.countryCode) as string;
-  // const vat = (req.query?.vat ?? req.body.vat) as string;
+return async (req: Request, res: Response) => {
 
   const vatRequest = req.query?req.query: req.body;
   // Define the Zod schema
@@ -22,11 +19,18 @@ export const validateVatController = async (req: Request, res: Response) => {
   const vatMessage = "vat must be a string and not be empty or null";
   const simpleRequestValidationSchema = z.object({
     countryCode: z
-      .string()
+      .string({
+        required_error: isoMessage,
+        invalid_type_error: isoMessage,
+      })
       .length(2, isoMessage) // Ensure ISO 2 format
-      .regex(/^[A-Z]{2}$/, isoMessage), // Validate uppercase letters
+      .regex(/^[A-Z]{2}$/, isoMessage) // Validate uppercase letters
+      ,
     vat: z
-      .string()
+      .string({
+        required_error: vatMessage,
+        invalid_type_error: vatMessage,
+      })
       .min(1, vatMessage) // Ensure VAT is not empty
   });
 
@@ -96,3 +100,4 @@ export const validateVatController = async (req: Request, res: Response) => {
     }
   }
 };
+}

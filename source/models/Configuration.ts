@@ -19,7 +19,7 @@ export interface Configuration {
   readonly expressServerOptions: ExpressServerOptions;
 }
 
-export const readAppConfiguration = (file: string): Configuration => {
+export const readConfiguration = (file: string): Configuration => {
   const configuration: Configuration = JSON.parse(
     fs.readFileSync(file, "utf-8")
   );
