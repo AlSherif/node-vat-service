@@ -44,6 +44,105 @@ paths:
               example:
                 code: 400
                 message: "The VAT number does not match the expected format for the given country code."
+        '405':
+          description: Method Not Allowed - HTTP method is not supported.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MethodNotAllowedError'
+              example:
+                code: 405
+                message: "Method Not Allowed"
+        '404':
+          description: Not Found - Route does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              example:
+                code: 404
+                message: "Not Found"
+        '501':
+          description: Not Implemented - Unsupported country code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotImplementedError'
+              example:
+                code: 501
+                message: "The country code is not supported by any VAT validation service."
+        '500':
+          description: Internal Server Error - An unexpected error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+              example:
+                code: 500
+                message: "An error occurred while validating the VAT number via the external service."
+    get:
+      summary: Validate a VAT number (GET)
+      description: Validates a VAT number for a given country code using query parameters. Equivalent zu POST, aber mit Query-Parametern.
+      parameters:
+        - in: query
+          name: countryCode
+          schema:
+            type: string
+            example: "DE"
+          required: true
+          description: The country code in ISO 2 format.
+        - in: query
+          name: vat
+          schema:
+            type: string
+            example: "123456789"
+          required: true
+          description: The VAT number to validate.
+      responses:
+        '200':
+          description: VAT number validation result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VatValidationResponse'
+              examples:
+                validVat:
+                  summary: Valid VAT number
+                  value:
+                    validated: true
+                    details: "VAT number is valid for the given country code."
+                invalidVat:
+                  summary: Invalid VAT number
+                  value:
+                    validated: false
+                    details: "VAT number marked as invalid by the external service."
+        '400':
+          description: Bad Request - Invalid VAT number or missing parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BadRequestError'
+              example:
+                code: 400
+                message: "The VAT number does not match the expected format for the given country code."
+        '405':
+          description: Method Not Allowed - HTTP method is not supported.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MethodNotAllowedError'
+              example:
+                code: 405
+                message: "Method Not Allowed"
+        '404':
+          description: Not Found - Route does not exist.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              example:
+                code: 404
+                message: "Not Found"
         '501':
           description: Not Implemented - Unsupported country code.
           content:
@@ -122,3 +221,25 @@ components:
           type: string
           description: Error message.
           example: "An error occurred while validating the VAT number via the external service."
+    MethodNotAllowedError:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 405
+        message:
+          type: string
+          description: Error message.
+          example: "Method Not Allowed"
+    NotFoundError:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code.
+          example: 404
+        message:
+          type: string
+          description: Error message.
+          example: "Not Found"
