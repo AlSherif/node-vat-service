@@ -13,12 +13,14 @@ const configuration: Configuration = readConfiguration(configurationFile);
 const server = createHttpServer(app);
 
 // Server-specific configurations
-server.keepAliveTimeout = configuration.expressServerOptions.keepAliveTimeout;
-server.maxHeadersCount = configuration.expressServerOptions.maxHeadersCount;
-server.maxConnections = configuration.expressServerOptions.maxConnections;
-server.headersTimeout = configuration.expressServerOptions.headersTimeout;
-server.requestTimeout = configuration.expressServerOptions.requestTimeout;
-server.timeout = configuration.expressServerOptions.timeout;
+  if(configuration.expressServerOptions) {
+  server.keepAliveTimeout = configuration.expressServerOptions?.keepAliveTimeout;
+  server.maxHeadersCount = configuration.expressServerOptions?.maxHeadersCount;
+  server.maxConnections = configuration.expressServerOptions?.maxConnections;
+  server.headersTimeout = configuration.expressServerOptions?.headersTimeout;
+  server.requestTimeout = configuration.expressServerOptions?.requestTimeout;
+  server.timeout = configuration.expressServerOptions.timeout;
+}
 
 server.listen(configuration.port, () => {
   console.log({ description: "START", port: configuration.port });

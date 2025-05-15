@@ -16,7 +16,7 @@ export interface Configuration {
     [key: string]: string; // Erlaubt beliebige String-Keys
   };
   readonly port?: number; // Optional, falls in der Konfiguration vorhanden
-  readonly expressServerOptions: ExpressServerOptions;
+  readonly expressServerOptions?: ExpressServerOptions;
 }
 
 export const readConfiguration = (file: string): Configuration => {

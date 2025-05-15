@@ -13,7 +13,7 @@ export const createVatValidationController = (configuration: Configuration) => {
 
 return async (req: Request, res: Response) => {
 
-  const vatRequest = req.query?req.query: req.body;
+  const vatRequest = req.method === 'GET' ? req.query : req.body;
   // Define the Zod schema
   const isoMessage = "countryCode must be a string in ISO 2 format and consist of two uppercase letters";
   const vatMessage = "vat must be a string and not be empty or null";
@@ -44,12 +44,15 @@ return async (req: Request, res: Response) => {
         .map((issue) => issue.message) // Extract the "message" field
         .join('; '); // Concatenate with "; "
       // Return the error response
+      console.log('VAT Request NOT validated', vatRequest);
       return res.status(400).json({
         code: 400,
         message: allErrorMessages,
       });
     }
   }
+
+  console.log('VAT Request validated', vatRequest);
 
   //Check if countryCode is supported
   const countryCode = vatRequest.countryCode as string;

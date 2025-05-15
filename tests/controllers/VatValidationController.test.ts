@@ -1,9 +1,10 @@
-import { validateVatController } from '../../source/controllers/VatValidationController';
+import { createVatValidationController } from '../../source/controllers/VatValidationController';
 import { Request, Response } from 'express';
 import { CHVatValidationService } from '../../source/services/CHVatValidationService';
 import { EUVatValidationService } from '../../source/services/EUVatValidationService';
 import axios from 'axios';
 import { createClientAsync } from 'soap';
+import { Configuration } from '../../source/models/Configuration';
 
 // Mock external dependencies
 jest.mock('axios');
@@ -11,6 +12,13 @@ jest.mock('soap');
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedCreateClientAsync = createClientAsync as jest.Mock;
+const mockConfiguration: Configuration = {
+  apiUrl: {
+    EUVatValidationService: 'https://api.example.com/eu',
+    CHVatValidationService: 'https://api.example.com/ch',
+  }
+};
+const validateVatController = createVatValidationController(mockConfiguration);
 
 describe('validateVatController', () => {
   let mockRequest: Partial<Request>;

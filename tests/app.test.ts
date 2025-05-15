@@ -1,82 +1,90 @@
 import request from 'supertest';
-import createServer from '../source/app.js';
+import createApp from '../source/app.js';
 import { Configuration } from '../source/models/Configuration.js';
 
+// Optional: Controller-Mock für Fehlerfall
 import * as VatValidationController from '../source/controllers/VatValidationController.js';
+import {Router, Express} from 'express';
+import { any } from 'zod';
 
-describe('Server Initialization', () => {
-  let app: any;
-  let server: any;
+const mockConfiguration: Configuration = {
+  apiUrl: {
+    EUVatValidationService: 'https://api.example.com/eu',
+    CHVatValidationService: 'https://api.example.com/ch',
+  },
+  port: 3000,
+  expressServerOptions: {
+    keepAliveTimeout: 5000,
+    maxHeadersCount: 2000,
+    timeout: 120000,
+    maxConnections: 100,
+    headersTimeout: 60000,
+    requestTimeout: 120000,
+  },
+};
+
+describe('Express App', () => {
+  let app: ReturnType<typeof createApp>;
 
   beforeAll(() => {
-    const mockConfiguration: Configuration = {
-      apiUrl: {
-        EUVatValidationService: 'https://api.example.com/eu',
-        CHVatValidationService: 'https://api.example.com/ch',
-      },
-      port: 3000,
-      expressServerOptions: {
-        keepAliveTimeout: 5000,
-        maxHeadersCount: 2000,
-        timeout: 120000,
-        maxConnections: 100,
-        headersTimeout: 60000,
-        requestTimeout: 120000,
-      },
-    };
-
-    const serverInstance = createServer(mockConfiguration);
-    app = serverInstance.app;
-    server = serverInstance.server;
+    app = createApp(mockConfiguration);
   });
 
-  afterAll(() => {
-    server.close();
-  });
-
-  it('should initialize the server with correct configurations', () => {
-    expect(server.keepAliveTimeout).toBe(5000);
-    expect(server.maxHeadersCount).toBe(2000);
-    expect(server.timeout).toBe(120000);
-    expect(server.maxConnections).toBe(100);
-    expect(server.headersTimeout).toBe(60000);
-    expect(server.requestTimeout).toBe(120000);
-  });
-
-it('should handle errors with a 500 status code', async () => {
-  // Mock the validateVatController to throw an error
-  jest.spyOn(VatValidationController, 'validateVatController').mockImplementation(() => {
-    throw new Error('Test error');
-  });
-
-  const response = await request(app).post('/').send({
-    countryCode: 'DE',
-    vat: 'DE123456789',
-  });
-
-  expect(response.status).toBe(500);
-  expect(response.body).toEqual({
-    code: 500,
-    message: 'Internal Server Error',
-  });
-
-  // Restore the original implementation
-  jest.restoreAllMocks();
-});
-
-  it('should include middleware like Helmet and responseTime', async () => {
+  it('should include security headers via Helmet', async () => {
     const response = await request(app).get('/');
     expect(response.headers['x-dns-prefetch-control']).toBe('off');
     expect(response.headers['x-frame-options']).toBe('SAMEORIGIN');
     expect(response.headers['x-content-type-options']).toBe('nosniff');
   });
 
+  it('should return 405 for unsupported HTTP method PUT', async () => {
+    const response = await request(app).put('/');
+    expect(response.status).toBe(405);
+    console.log('Response:', response.status, response.body);
+    expect(response.body).toEqual({
+      code: 405,
+      message: 'Method Not Allowed',
+    });
+  });
+  
+  it('should return 405 for unsupported HTTP method DELETE', async () => {
+    const response = await request(app).delete('/');
+    expect(response.status).toBe(405);
+    expect(response.body).toEqual({
+      code: 405,
+      message: 'Method Not Allowed',
+    });
+  });
+
   it('should respond with 404 for unknown routes', async () => {
     const response = await request(app).get('/unknown-route');
-    expect(response.status).toBe(404);
+    expect(response.status)
+    .toBe(404);
     expect(response.body).toEqual({
       code: 404,
       message: 'Not Found',
     });
+  });
+
+  it('should handle errors with a 500 status code', async () => {
+  
+    // Testen Sie, ob der Fehler korrekt behandelt wird
+    await request(app)
+    .post('/error')
+    .send({ /* Testdaten */ })
+    .expect(500)
+    .expect((res) => {
+      expect(res.body).toEqual({
+        code: 500,
+        message: 'Mock Error',
+      });
+    });
+  });
+
+  it('should include response-time header', async () => {
+    const response = await request(app).get('/');
+    // response-time header ist z.B. x-response-time
+    const responseTimeHeader = Object.keys(response.headers).find((h) => h.startsWith('x-response-time'));
+    expect(responseTimeHeader).toBeDefined();
   });
 });
