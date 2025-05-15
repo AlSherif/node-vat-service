@@ -1,20 +1,21 @@
-import { Configuration, readConfiguration } from "./models/Configuration.js";
-import createApp from "./app.js";
-import { createServer as createHttpServer, Server } from "http";
+import {Configuration, readConfiguration} from './models/Configuration.js';
+import createApp from './app.js';
+import {createServer as createHttpServer} from 'http';
 
 // read the configuration file
-const configurationFile = "config.json";
+const configurationFile = 'config.json';
 const configuration: Configuration = readConfiguration(configurationFile);
 
 // Create an Express application
-  const app = createApp(configuration);
+const app = createApp(configuration);
 
-  // Create the HTTP server
+// Create the HTTP server
 const server = createHttpServer(app);
 
 // Server-specific configurations
-  if(configuration.expressServerOptions) {
-  server.keepAliveTimeout = configuration.expressServerOptions?.keepAliveTimeout;
+if (configuration.expressServerOptions) {
+  server.keepAliveTimeout =
+    configuration.expressServerOptions?.keepAliveTimeout;
   server.maxHeadersCount = configuration.expressServerOptions?.maxHeadersCount;
   server.maxConnections = configuration.expressServerOptions?.maxConnections;
   server.headersTimeout = configuration.expressServerOptions?.headersTimeout;
@@ -23,6 +24,6 @@ const server = createHttpServer(app);
 }
 
 server.listen(configuration.port, () => {
-  console.log({ description: "START", port: configuration.port });
+  console.log({description: 'START', port: configuration.port});
 });
-export { app, server };
+export {app, server};

@@ -1,8 +1,6 @@
-import request from 'supertest';
-import { Express } from 'express';
-import { createServer as createHttpServer, Server } from 'http';
+import {createServer as createHttpServer, Server} from 'http';
 import createApp from '../source/app.js';
-import { Configuration } from '../source/models/Configuration.js';
+import {Configuration} from '../source/models/Configuration.js';
 
 describe('HTTP Server Konfiguration', () => {
   let server: Server;
@@ -26,18 +24,23 @@ describe('HTTP Server Konfiguration', () => {
     const app = createApp(mockConfiguration);
     server = createHttpServer(app);
     // Server-spezifische Einstellungen setzen
-    server.keepAliveTimeout = mockConfiguration.expressServerOptions!.keepAliveTimeout;
-    server.maxHeadersCount = mockConfiguration.expressServerOptions!.maxHeadersCount;
-    server.maxConnections = mockConfiguration.expressServerOptions!.maxConnections;
-    server.headersTimeout = mockConfiguration.expressServerOptions!.headersTimeout;
-    server.requestTimeout = mockConfiguration.expressServerOptions!.requestTimeout;
+    server.keepAliveTimeout =
+      mockConfiguration.expressServerOptions!.keepAliveTimeout;
+    server.maxHeadersCount =
+      mockConfiguration.expressServerOptions!.maxHeadersCount;
+    server.maxConnections =
+      mockConfiguration.expressServerOptions!.maxConnections;
+    server.headersTimeout =
+      mockConfiguration.expressServerOptions!.headersTimeout;
+    server.requestTimeout =
+      mockConfiguration.expressServerOptions!.requestTimeout;
     server.timeout = mockConfiguration.expressServerOptions!.timeout;
     server.listen(mockConfiguration.port, () => {
-      console.log({ description: "START", port: mockConfiguration.port });
+      console.log({description: 'START', port: mockConfiguration.port});
     });
   });
 
-  afterAll((done) => {
+  afterAll(done => {
     server.close(done);
   });
 

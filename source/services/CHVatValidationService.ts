@@ -1,13 +1,13 @@
-import { createClientAsync } from 'soap';
-import { ExternalVatValidationService } from './VatValidationService';
-import { SupportedCountry } from '../models/SupportedCountry';
+import {createClientAsync} from 'soap';
+import {ExternalVatValidationService} from './VatValidationService';
+import {SupportedCountry} from '../models/SupportedCountry';
 
-const supportedCountries = new Array<SupportedCountry>(
-  { countryCode: "CH", regex: new RegExp("^CHE-[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}$") }
-);
+const supportedCountries = new Array<SupportedCountry>({
+  countryCode: 'CH',
+  regex: new RegExp('^CHE-[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}$'),
+});
 
 export class CHVatValidationService extends ExternalVatValidationService {
-
   getSupportedCountries(): Array<SupportedCountry> {
     return supportedCountries;
   }
@@ -21,7 +21,9 @@ export class CHVatValidationService extends ExternalVatValidationService {
 
   async validate(countryCode: string, vat: string): Promise<boolean> {
     if (countryCode !== 'CH') {
-      throw new Error('This service only supports Swiss VAT numbers (countryCode: CH).');
+      throw new Error(
+        'This service only supports Swiss VAT numbers (countryCode: CH).',
+      );
     }
 
     try {

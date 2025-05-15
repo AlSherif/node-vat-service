@@ -1,5 +1,5 @@
-import { CHVatValidationService } from '../../source/services/CHVatValidationService';
-import { createClientAsync } from 'soap';
+import {CHVatValidationService} from '../../source/services/CHVatValidationService';
+import {createClientAsync} from 'soap';
 
 jest.mock('soap');
 
@@ -11,7 +11,7 @@ describe('CHVatValidationService', () => {
 
   it('should return true for a valid Swiss VAT number', async () => {
     MockCreateClientAsync.mockResolvedValue({
-      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{ valid: true }]),
+      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{valid: true}]),
     });
 
     const isValid = await vatService.validate('CH', 'CHE-123.456.789');
@@ -20,12 +20,10 @@ describe('CHVatValidationService', () => {
 
   it('should return false for an invalid Swiss VAT number', async () => {
     MockCreateClientAsync.mockResolvedValue({
-      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{ valid: false }]),
+      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{valid: false}]),
     });
 
     const isValid = await vatService.validate('CH', 'CHE-000.000.000');
     expect(isValid).toBe(false);
   });
-  
 });
-

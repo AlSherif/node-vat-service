@@ -1,10 +1,8 @@
-import { createVatValidationController } from '../../source/controllers/VatValidationController';
-import { Request, Response } from 'express';
-import { CHVatValidationService } from '../../source/services/CHVatValidationService';
-import { EUVatValidationService } from '../../source/services/EUVatValidationService';
+import {createVatValidationController} from '../../source/controllers/VatValidationController';
+import {Request, Response} from 'express';
 import axios from 'axios';
-import { createClientAsync } from 'soap';
-import { Configuration } from '../../source/models/Configuration';
+import {createClientAsync} from 'soap';
+import {Configuration} from '../../source/models/Configuration';
 
 // Mock external dependencies
 jest.mock('axios');
@@ -16,7 +14,7 @@ const mockConfiguration: Configuration = {
   apiUrl: {
     EUVatValidationService: 'https://api.example.com/eu',
     CHVatValidationService: 'https://api.example.com/ch',
-  }
+  },
 };
 const validateVatController = createVatValidationController(mockConfiguration);
 
@@ -41,7 +39,7 @@ describe('validateVatController', () => {
 
   it('should return 200 for a valid VAT number', async () => {
     // Mock the external HTTP call for EUVatValidationService
-    mockedAxios.post.mockResolvedValue({ status: 200, data: { valid: true } });
+    mockedAxios.post.mockResolvedValue({status: 200, data: {valid: true}});
 
     mockRequest = {
       body: {
@@ -50,7 +48,10 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(200);
     expect(jsonMock).toHaveBeenCalledWith({
@@ -61,7 +62,7 @@ describe('validateVatController', () => {
 
   it('should return 200 for an invalid VAT number in correct format', async () => {
     // Mock the external HTTP call for EUVatValidationService
-    mockedAxios.post.mockResolvedValue({ status: 200, data: { valid: false } });
+    mockedAxios.post.mockResolvedValue({status: 200, data: {valid: false}});
 
     mockRequest = {
       body: {
@@ -70,7 +71,10 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(200);
     expect(jsonMock).toHaveBeenCalledWith({
@@ -82,7 +86,7 @@ describe('validateVatController', () => {
   it('should return 200 for a valid Swiss VAT number', async () => {
     // Mock the external SOAP call for CHVatValidationService
     mockedCreateClientAsync.mockResolvedValue({
-      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{ valid: true }]),
+      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{valid: true}]),
     });
 
     mockRequest = {
@@ -92,7 +96,10 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(200);
     expect(jsonMock).toHaveBeenCalledWith({
@@ -104,7 +111,7 @@ describe('validateVatController', () => {
   it('should return 200 for an invalid Swiss VAT number', async () => {
     // Mock the external SOAP call for CHVatValidationService
     mockedCreateClientAsync.mockResolvedValue({
-      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{ valid: false }]),
+      ValidateVatNumberAsync: jest.fn().mockResolvedValue([{valid: false}]),
     });
 
     mockRequest = {
@@ -114,7 +121,10 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(200);
     expect(jsonMock).toHaveBeenCalledWith({
@@ -131,12 +141,16 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(400);
     expect(jsonMock).toHaveBeenCalledWith({
       code: 400,
-      message: 'The VAT number INVALID does not match the expected format for country code DE.',
+      message:
+        'The VAT number INVALID does not match the expected format for country code DE.',
     });
   });
 
@@ -148,12 +162,16 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(501);
     expect(jsonMock).toHaveBeenCalledWith({
       code: 501,
-      message: 'The country code XX is not supported by any VAT validation service.',
+      message:
+        'The country code XX is not supported by any VAT validation service.',
     });
   });
 
@@ -164,12 +182,16 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(400);
     expect(jsonMock).toHaveBeenCalledWith({
       code: 400,
-      message: 'countryCode must be a string in ISO 2 format and consist of two uppercase letters',
+      message:
+        'countryCode must be a string in ISO 2 format and consist of two uppercase letters',
     });
   });
 
@@ -180,7 +202,10 @@ describe('validateVatController', () => {
       },
     };
 
-    await validateVatController(mockRequest as Request, mockResponse as Response);
+    await validateVatController(
+      mockRequest as Request,
+      mockResponse as Response,
+    );
 
     expect(statusMock).toHaveBeenCalledWith(400);
     expect(jsonMock).toHaveBeenCalledWith({

@@ -1,4 +1,4 @@
 export interface SupportedCountry {
-    readonly countryCode: string;
-    readonly regex: RegExp;
-  }
+  readonly countryCode: string;
+  readonly regex: RegExp;
+}

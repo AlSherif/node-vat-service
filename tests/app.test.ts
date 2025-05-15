@@ -1,11 +1,6 @@
 import request from 'supertest';
 import createApp from '../source/app.js';
-import { Configuration } from '../source/models/Configuration.js';
-
-// Optional: Controller-Mock für Fehlerfall
-import * as VatValidationController from '../source/controllers/VatValidationController.js';
-import {Router, Express} from 'express';
-import { any } from 'zod';
+import {Configuration} from '../source/models/Configuration.js';
 
 const mockConfiguration: Configuration = {
   apiUrl: {
@@ -40,13 +35,12 @@ describe('Express App', () => {
   it('should return 405 for unsupported HTTP method PUT', async () => {
     const response = await request(app).put('/');
     expect(response.status).toBe(405);
-    console.log('Response:', response.status, response.body);
     expect(response.body).toEqual({
       code: 405,
       message: 'Method Not Allowed',
     });
   });
-  
+
   it('should return 405 for unsupported HTTP method DELETE', async () => {
     const response = await request(app).delete('/');
     expect(response.status).toBe(405);
@@ -58,8 +52,7 @@ describe('Express App', () => {
 
   it('should respond with 404 for unknown routes', async () => {
     const response = await request(app).get('/unknown-route');
-    expect(response.status)
-    .toBe(404);
+    expect(response.status).toBe(404);
     expect(response.body).toEqual({
       code: 404,
       message: 'Not Found',
@@ -67,24 +60,27 @@ describe('Express App', () => {
   });
 
   it('should handle errors with a 500 status code', async () => {
-  
     // Testen Sie, ob der Fehler korrekt behandelt wird
     await request(app)
-    .post('/error')
-    .send({ /* Testdaten */ })
-    .expect(500)
-    .expect((res) => {
-      expect(res.body).toEqual({
-        code: 500,
-        message: 'Mock Error',
+      .post('/error')
+      .send({
+        /* Testdaten */
+      })
+      .expect(500)
+      .expect(res => {
+        expect(res.body).toEqual({
+          code: 500,
+          message: 'Mock Error',
+        });
       });
-    });
   });
 
   it('should include response-time header', async () => {
     const response = await request(app).get('/');
     // response-time header ist z.B. x-response-time
-    const responseTimeHeader = Object.keys(response.headers).find((h) => h.startsWith('x-response-time'));
+    const responseTimeHeader = Object.keys(response.headers).find(h =>
+      h.startsWith('x-response-time'),
+    );
     expect(responseTimeHeader).toBeDefined();
   });
 });
